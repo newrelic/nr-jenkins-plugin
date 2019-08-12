@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+ * Copyright 2019 New Relic Corporation. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0 
+-->
+<suite name="UnitTests" verbose="1">
+  <groups>
+    <run>
+      <include name="unit"/>
+    </run>
+  </groups>
+  <test name="ClientTests">
+    <packages>
+      <package name="com.newrelic.experts.client.internal" />
+    </packages>
+  </test>
+</suite>

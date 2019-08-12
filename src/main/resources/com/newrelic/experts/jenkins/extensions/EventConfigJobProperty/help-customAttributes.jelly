@@ -1,0 +1,36 @@
+<?jelly escape-by-default='true'?>
+<!-- 
+ * Copyright 2019 New Relic Corporation. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0 
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout">
+<l:ajax>
+<div>
+   <p>
+   This setting allows additional custom attributes to be added to the
+   <code>AppBuildEvent</code>s that are created by the New Relic Jenkins
+   build listener.
+   </p>
+   <p>
+   The "Name" of the attribute may only contain alphanumeric characters and
+   the "." character.
+   </p>
+   <p>
+   The "Value" of the attribute <em>may</em> contain token and macro
+   expressions. However, token and macro expressions will only be replaced
+   under the following conditions. At other times, custom attribute values
+   with tokens will appear with the raw token expressions.
+   </p>
+   <ul>
+     <li>During build initialized, finalized, and deleted build phases,
+     no tokens will be replaced.</li>
+     <li>During the build started phase, ${%envVarsLink(rootURL)} will be
+     replaced.</li>
+     <li>During the build completed phase, ${%envVarsLink(rootURL)} and
+	   all tokens produced by plugins will be replaced.</li>
+   </ul>
+   <h3>Available Tokens</h3>
+   <help xmlns="/lib/token-macro"/>
+</div>
+</l:ajax>
+</j:jelly>
