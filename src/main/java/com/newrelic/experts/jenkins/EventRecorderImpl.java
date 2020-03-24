@@ -300,6 +300,12 @@ public class EventRecorderImpl implements EventRecorder {
       LOGGER.entering(CLASS_NAME, methodName);
     }
 
+    Jenkins jenkins = Jenkins.getInstance();
+    VersionNumber ver = Jenkins.getVersion();
+    jenkinsMasterEvent.put("providerVersion", (ver != null ? ver.toString() : "unknown"));
+    setLabels(jenkinsMasterEvent, "jenkinsMasterLabels", jenkins);
+    setHostname(jenkinsMasterEvent, "jenkinsMasterHost", jenkins);
+
     this.events.add(jenkinsMasterEvent);
 
     if (isLoggingDebug) {
