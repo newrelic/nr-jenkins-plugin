@@ -7,6 +7,7 @@ package com.newrelic.experts.jenkins;
 
 import com.newrelic.experts.client.model.Event;
 
+import com.newrelic.experts.client.model.JenkinsMasterEvent;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -84,6 +85,16 @@ public interface EventRecorder {
       String description,
       String user
   );
+
+  /**
+   * Record custom Insights "Jenkins master event".
+   * <p>
+   *    Events will be available as JenkinsMasterEvent with attributes
+   *    'agentConnectedCount' and 'quietDownMode'
+   * </p>
+   * @param jenkinsMasterEvent the Jenkins Master Event
+   */
+  void recordJenkinsMasterEvent(JenkinsMasterEvent jenkinsMasterEvent);
   
   /**
    * Drain all events out of this recorder.

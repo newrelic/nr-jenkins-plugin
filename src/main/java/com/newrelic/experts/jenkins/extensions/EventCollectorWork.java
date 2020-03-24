@@ -34,7 +34,7 @@ public class EventCollectorWork extends PeriodicWork {
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
   private NewRelicGlobalConfiguration nrjConfig;
-  private EventRecorder recorder;
+  private final EventRecorder recorder;
   private NewRelicClient client;
   
   /**
@@ -77,49 +77,59 @@ public class EventCollectorWork extends PeriodicWork {
   
   @Override
   protected void doRun() throws Exception {
-    final String methodName = "doRun";
-    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
-    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
+    synchronized (this.recorder) {
+      final String methodName = "doRun";
+      final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+      final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
 
-    if (isLoggingTrace) {
-      LOGGER.entering(CLASS_NAME, methodName);
-    }
-
-    Event[] events = this.recorder.popEvents();
-
-    if (events.length == 0) {
-      if (isLoggingDebug) {
-        LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
-            "RETURN EARLY No events to send."
-        );
+      if (isLoggingTrace)
+      {
+        LOGGER.entering(CLASS_NAME, methodName);
       }
-      return;
-    }
-    
-    StandardUsernamePasswordCredentials credentialsId =
-        this.nrjConfig.getInsightsInsertCredentials();
-    if (credentialsId == null) {
-      if (isLoggingTrace) {
-        LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
-            "RETURN EARLY No credentials."
-        );
-      }
-      return;
-    }
 
-    try {
-      this.client.recordEvents(
-          JenkinsUtils.createClientConnectionConfig(this.client),
-          credentialsId.getUsername(),
-          Secret.toString(credentialsId.getPassword()),
-          events
-      );
-    } catch (NewRelicClientException nrce) {
-      LOGGER.log(Level.SEVERE, "Failed to post events");
-    }
-    
-    if (isLoggingTrace) {
-      LOGGER.exiting(CLASS_NAME, methodName);
+      Event[] events = this.recorder.popEvents();
+
+      if (events.length == 0)
+      {
+        if (isLoggingDebug)
+        {
+          LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
+              "RETURN EARLY No events to send."
+          );
+        }
+        return;
+      }
+
+      StandardUsernamePasswordCredentials credentialsId =
+          this.nrjConfig.getInsightsInsertCredentials();
+      if (credentialsId == null)
+      {
+        if (isLoggingTrace)
+        {
+          LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
+              "RETURN EARLY No credentials."
+          );
+        }
+        return;
+      }
+
+      try
+      {
+        this.client.recordEvents(
+            JenkinsUtils.createClientConnectionConfig(this.client),
+            credentialsId.getUsername(),
+            Secret.toString(credentialsId.getPassword()),
+            events
+        );
+      } catch (NewRelicClientException nrce)
+      {
+        LOGGER.log(Level.SEVERE, "Failed to post events");
+      }
+
+      if (isLoggingTrace)
+      {
+        LOGGER.exiting(CLASS_NAME, methodName);
+      }
     }
   }
 

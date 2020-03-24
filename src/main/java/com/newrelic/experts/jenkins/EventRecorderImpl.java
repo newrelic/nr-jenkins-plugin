@@ -6,6 +6,7 @@
 package com.newrelic.experts.jenkins;
 
 import com.newrelic.experts.client.model.Event;
+import com.newrelic.experts.client.model.JenkinsMasterEvent;
 import com.newrelic.experts.jenkins.extensions.EventConfigJobProperty;
 import com.newrelic.experts.jenkins.extensions.KeyValuePair;
 
@@ -39,6 +40,8 @@ public class EventRecorderImpl implements EventRecorder {
 
   private static final String CLASS_NAME = EventRecorderImpl.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
+  private final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+  private final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
 
   private List<Event> events;
   
@@ -76,9 +79,7 @@ public class EventRecorderImpl implements EventRecorder {
       TaskListener listener
   ) {
     final String methodName = "internalRecordBuildEvent";
-    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
-    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
-    
+
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName, new Object[] { eventType });
     }
@@ -180,8 +181,6 @@ public class EventRecorderImpl implements EventRecorder {
       String user
   ) {
     final String methodName = "recordBuildEvent";
-    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
-    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
     
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName, new Object[] {
@@ -290,6 +289,27 @@ public class EventRecorderImpl implements EventRecorder {
           }
         }
       }
+    }
+  }
+
+  @Override
+  public void recordJenkinsMasterEvent(JenkinsMasterEvent jenkinsMasterEvent) {
+    final String methodName = "recordJenkinsMasterEvent";
+
+    if (isLoggingTrace) {
+      LOGGER.entering(CLASS_NAME, methodName);
+    }
+
+    this.events.add(jenkinsMasterEvent);
+
+    if (isLoggingDebug) {
+      LOGGER.finest(String.format(
+          "Added JenkinsMasterEvent"
+      ));
+    }
+
+    if (isLoggingTrace) {
+      LOGGER.exiting(CLASS_NAME, methodName);
     }
   }
 }
