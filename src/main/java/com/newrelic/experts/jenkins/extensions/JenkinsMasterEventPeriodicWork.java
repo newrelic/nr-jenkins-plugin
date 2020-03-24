@@ -82,9 +82,9 @@ public class JenkinsMasterEventPeriodicWork
           .stream()
           .filter(computer -> computer.isOnline() && computer.isAcceptingTasks())
           .peek(computer -> {
-              if (isLoggingTrace) {
-                LOGGER.fine("Found computer" + computer.getName());
-              }
+            if (isLoggingTrace) {
+              LOGGER.fine("Found computer" + computer.getName());
+            }
           })
           .count();
       jenkinsMasterEvent.setAgentConnectedCount((int) count);
