@@ -11,7 +11,7 @@
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
 		<version>3.4</version>
-		<relativePath />
+		<relativePath/>
 	</parent>
 	<groupId>com.newrelic.jenkins</groupId>
 	<artifactId>new-relic</artifactId>
@@ -148,7 +148,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.9.10.4</version>
+      <version>2.9.10.6</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
