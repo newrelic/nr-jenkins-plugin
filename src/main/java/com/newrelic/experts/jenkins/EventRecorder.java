@@ -7,7 +7,9 @@ package com.newrelic.experts.jenkins;
 
 import com.newrelic.experts.client.model.Event;
 
+import hudson.model.Computer;
 import hudson.model.Job;
+import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
@@ -66,8 +68,7 @@ public interface EventRecorder {
       BuildEventType eventType,
       Run<? extends Job<?, ?>, ? extends Run<?, ?>> build
   );
-  
-  
+
   /**
    * Record custom Insights "application deployment event".
    * 
@@ -84,7 +85,23 @@ public interface EventRecorder {
       String description,
       String user
   );
-  
+
+  /**
+   * Record custom Insights for queue status.
+   * 
+   * @param queue
+   */
+  void recordQueueEvent(
+      Queue queue
+  );
+
+  /**
+   * Record custom Insights for computer status.
+   * 
+   * @param computer
+   */
+  void recordNodeEvent(Computer computer);
+
   /**
    * Drain all events out of this recorder.
    * <p>

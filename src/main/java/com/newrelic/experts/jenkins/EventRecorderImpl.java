@@ -11,8 +11,10 @@ import com.newrelic.experts.jenkins.extensions.KeyValuePair;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Computer;
+import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Node;
+import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -21,6 +23,7 @@ import hudson.util.TagCloud;
 import hudson.util.VersionNumber;
 
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -154,6 +157,89 @@ public class EventRecorderImpl implements EventRecorder {
     }
   }
   
+  private void internalRecordQueueEvent(
+    Queue queue
+  ) {
+    final Queue.Item[] items = queue.getItems();
+    final String methodName = "internalRecordQueueEvent";
+    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
+
+    if (isLoggingTrace) {
+      LOGGER.entering(CLASS_NAME, methodName, new Object[] { queue });
+    }
+
+    int blocked = 0;
+    int pending = 0;
+    int stuck = 0;
+
+    for (Queue.Item item : items) {
+      String jobName = "unknown";
+      Queue.Task task = item.task;
+
+      if (task instanceof FreeStyleProject) {
+        jobName = task.getFullDisplayName();
+      } else if (task instanceof ExecutorStepExecution.PlaceholderTask) {
+        Run<?, ?> run = ((ExecutorStepExecution.PlaceholderTask) task).runForDisplay();
+        if (run != null) {
+          jobName = run.getParent().getFullName();
+        } else {
+          jobName = "unknown";
+        }
+      }
+
+      Node buildAgent = Jenkins.getInstance();
+
+      Event event = new Event("AppQueueItemEvent");
+      event.put("jobName", jobName);
+      event.put("taskUrl", task.getUrl());
+      event.put("isStuck", item.isStuck());
+      event.put("isBuildable", item.isBuildable());
+      event.put("isBlocked", item.isBlocked());
+      event.put("isPending", queue.isPending(task));
+      event.put("message", item.getWhy());
+      event.put("since", item.getInQueueSince());
+      event.put("queuedAgentName", buildAgent.getDisplayName());
+      event.put("queueAgentDesc", buildAgent.getNodeDescription());
+      event.put("labels", buildAgent.getLabelString());
+      setLabels(event, "queuedAgentLabels", buildAgent);
+      setHostname(event, "queueAgentHost", buildAgent);
+
+      Jenkins jenkins = Jenkins.getInstance();
+      setLabels(event, "jenkinsMasterLabels", jenkins);
+      setHostname(event, "jenkinsMasterHost", jenkins);
+
+      if (item.isStuck()) {
+        stuck++;
+      }
+
+      if (item.isBlocked()) {
+        blocked++;
+      }
+      if (queue.isPending(task)) {
+        pending++;
+      }
+
+      this.events.add(event);
+    }
+
+    Event eventQueue = new Event("AppQueueEvent");
+    eventQueue.put("stuckItems", stuck);
+    eventQueue.put("buildableItems", queue.countBuildableItems());
+    eventQueue.put("blockedItems", blocked);
+    eventQueue.put("pendingItems", pending);
+
+    this.events.add(eventQueue);
+
+    if (isLoggingDebug) {
+      LOGGER.finest(String.format("Added queue %s", queue));
+    }
+
+    if (isLoggingTrace) {
+      LOGGER.exiting(CLASS_NAME, methodName);
+    }
+  }
+  
   @Override
   public void recordBuildEvent(
       BuildEventType eventType,
@@ -216,7 +302,31 @@ public class EventRecorderImpl implements EventRecorder {
       LOGGER.exiting(CLASS_NAME, methodName);
     }
   }
-  
+
+  @Override
+  public void recordQueueEvent(Queue queue) {
+    this.internalRecordQueueEvent(queue);
+  }
+
+  @Override
+  public void recordNodeEvent(Computer computer) {
+    Event event = new Event("AppNodeEvent");
+    System.out.println("Entra");
+    try {
+      event.put("hostname", computer.getHostName());
+      event.put("nodeUrl", computer.getUrl());
+      event.put("idle", computer.countIdle());
+      event.put("busy", computer.countBusy());
+      System.out.println(event.toString());
+
+    } catch (IOException exception) {
+      exception.printStackTrace();
+    } catch (InterruptedException exceptionI) {
+      exceptionI.printStackTrace();
+    }
+    this.events.add(event);
+  }
+
   @Override
   public Event[] popEvents() {
     Event[] eventAry = new Event[this.events.size()];
