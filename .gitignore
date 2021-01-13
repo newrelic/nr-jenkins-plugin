@@ -47,3 +47,7 @@ buildNumber.properties
 
 # Other
 .README.md*
+
+build
+
+new-relic.iml
