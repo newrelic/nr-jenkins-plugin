@@ -1,6 +1,6 @@
 /*
  * Copyright 2019 New Relic Corporation. All rights reserved.
- * SPDX-License-Identifier: Apache-2.0 
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package com.newrelic.experts.jenkins;
@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 /**
  * An implementation of the {@link EventRecorder} that utilizes a simple
  * {@link java.util.LinkedList} to store the events.
- * 
+ *
  * @author Scott DeWitt (sdewitt@newrelic.com)
  */
 public class EventRecorderImpl implements EventRecorder {
@@ -44,21 +44,21 @@ public class EventRecorderImpl implements EventRecorder {
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
   private List<Event> events;
-  
+
   public EventRecorderImpl() {
     this.events = new LinkedList<Event>();
   }
-  
+
   private void setLabels(Event event, String attributeName, Node node) {
     List<String> labels = new ArrayList<String>();
-    
+
     for (TagCloud<LabelAtom>.Entry atom : node.getLabelCloud()) {
       labels.add(atom.item.getDisplayName());
     }
-    
+
     event.put(attributeName, String.join("|", labels));
   }
-  
+
   private void setHostname(Event event, String attributeName, Node node) {
     Computer computer = node.toComputer();
     if (computer != null) {
@@ -72,7 +72,7 @@ public class EventRecorderImpl implements EventRecorder {
       }
     }
   }
-  
+
   private void internalRecordBuildEvent(
       BuildEventType eventType,
       Run<? extends Job<?, ?>, ? extends Run<?, ?>> build,
@@ -81,13 +81,13 @@ public class EventRecorderImpl implements EventRecorder {
     final String methodName = "internalRecordBuildEvent";
     final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
     final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
-    
+
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName, new Object[] { eventType });
     }
-    
+
     Job<?, ?> job = build.getParent();
-    
+
     Event event = new Event("AppBuildEvent");
     event.put("jobUrl", job.getUrl());
     event.put("jobName", job.getDisplayName());
@@ -99,12 +99,12 @@ public class EventRecorderImpl implements EventRecorder {
     event.put("buildEventType", eventType.toString().toLowerCase());
     event.put("buildQueueId", build.getQueueId());
     event.put("buildMessage", buildBuildMessage(eventType, job, build));
-    
+
     Result result = build.getResult();
     if (result != null) {
       event.put("buildResult", result.toString());
     }
-    
+
     if (eventType == BuildEventType.STARTED) {
       long scheduled = build.getTimeInMillis();
       long started = build.getStartTimeInMillis();
@@ -118,7 +118,7 @@ public class EventRecorderImpl implements EventRecorder {
       event.put("buildDuration", build.getDuration());
       event.put("buildStatusSummary", build.getBuildStatusSummary().message);
     }
-    
+
     Node buildAgent = Jenkins.getInstance();
     if (build instanceof AbstractBuild) {
       Node agent = (
@@ -132,7 +132,7 @@ public class EventRecorderImpl implements EventRecorder {
     event.put("buildAgentDesc", buildAgent.getNodeDescription());
     setLabels(event, "buildAgentLabels", buildAgent);
     setHostname(event, "buildAgentHost", buildAgent);
-    
+
     Jenkins jenkins = Jenkins.getInstance();
     VersionNumber ver = Jenkins.getVersion();
     event.put("provider", "Jenkins");
@@ -140,9 +140,9 @@ public class EventRecorderImpl implements EventRecorder {
     setLabels(event, "jenkinsMasterLabels", jenkins);
     setHostname(event, "jenkinsMasterHost", jenkins);
     setCustomAttributes(event, job, build, listener);
-    
+
     this.events.add(event);
-  
+
     if (isLoggingDebug) {
       LOGGER.finest(String.format(
           "Added event with type %s for job %s and build %s",
@@ -151,14 +151,14 @@ public class EventRecorderImpl implements EventRecorder {
           build.getDisplayName()
       ));
     }
-    
+
     if (isLoggingTrace) {
       LOGGER.exiting(CLASS_NAME, methodName);
     }
   }
-  
+
   private void internalRecordQueueEvent(
-    Queue queue
+      Queue queue
   ) {
     final Queue.Item[] items = queue.getItems();
     final String methodName = "internalRecordQueueEvent";
@@ -239,7 +239,7 @@ public class EventRecorderImpl implements EventRecorder {
       LOGGER.exiting(CLASS_NAME, methodName);
     }
   }
-  
+
   @Override
   public void recordBuildEvent(
       BuildEventType eventType,
@@ -248,7 +248,7 @@ public class EventRecorderImpl implements EventRecorder {
   ) {
     this.internalRecordBuildEvent(eventType, build, listener);
   }
-  
+
   @Override
   public void recordBuildEvent(
       BuildEventType eventType,
@@ -268,7 +268,7 @@ public class EventRecorderImpl implements EventRecorder {
     final String methodName = "recordBuildEvent";
     final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
     final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
-    
+
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName, new Object[] {
           appId
@@ -278,7 +278,7 @@ public class EventRecorderImpl implements EventRecorder {
     Event event = new Event("AppDeploymentEvent");
     event.put("appId", appId);
     event.put("revision", revision);
-    
+
     if (changeLog != null) {
       event.put("changelog", changeLog);
     }
@@ -288,16 +288,16 @@ public class EventRecorderImpl implements EventRecorder {
     if (user != null) {
       event.put("user", user);
     }
-    
+
     this.events.add(event);
-  
+
     if (isLoggingDebug) {
       LOGGER.finest(String.format(
           "Added application deployment event for appId %s",
           appId
       ));
     }
-    
+
     if (isLoggingTrace) {
       LOGGER.exiting(CLASS_NAME, methodName);
     }
@@ -311,13 +311,12 @@ public class EventRecorderImpl implements EventRecorder {
   @Override
   public void recordNodeEvent(Computer computer) {
     Event event = new Event("AppNodeEvent");
-    System.out.println("Entra");
+
     try {
       event.put("hostname", computer.getHostName());
       event.put("nodeUrl", computer.getUrl());
       event.put("idle", computer.countIdle());
       event.put("busy", computer.countBusy());
-      System.out.println(event.toString());
 
     } catch (IOException exception) {
       exception.printStackTrace();
@@ -334,10 +333,10 @@ public class EventRecorderImpl implements EventRecorder {
     this.events.clear();
     return eventAry;
   }
-  
+
   /**
    * Build the string used as the "buildMessage" attribute.
-   *  
+   *
    * @param eventType the build event type.
    * @param job the Jenkins job.
    * @param build the Jenkins run instance for an active run of the job.
@@ -345,7 +344,7 @@ public class EventRecorderImpl implements EventRecorder {
    */
   public String buildBuildMessage(
       BuildEventType eventType,
-      Job<?, ?> job, 
+      Job<?, ?> job,
       Run<? extends Job<?, ?>, ? extends Run<?, ?>> build
   ) {
     // xyz build full display name for job full display name
@@ -357,11 +356,11 @@ public class EventRecorderImpl implements EventRecorder {
         job.getFullDisplayName()
     );
   }
-  
+
   /**
    * Set any custom attributes on {@code event} that have been configured in
    * the {@code job} configuration.
-   * 
+   *
    * @param event the custom application build event being configured.
    * @param job the Jenkins job.
    * @param build the Jenkins run instance for an active run of the job.
