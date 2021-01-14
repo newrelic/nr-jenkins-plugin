@@ -10,23 +10,22 @@ import static org.mockito.Mockito.mock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.http.conn.HttpClientConnectionManager;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Test(groups = { "unit" })
 public class NewRelicApiHelperTest {
 
   private HttpClientConnectionManager connManagerStub;
   private ObjectMapper objMapperStub;
   private NewRelicApiHelper apiHelper;
   
-  @BeforeMethod
+  @Before
   public void setUp() {
     this.connManagerStub = mock(HttpClientConnectionManager.class);
     this.objMapperStub = mock(ObjectMapper.class);
