@@ -7,7 +7,6 @@ package com.newrelic.experts.jenkins;
 
 import com.newrelic.experts.client.model.Event;
 
-import com.newrelic.experts.client.model.JenkinsMasterEvent;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -90,12 +89,16 @@ public interface EventRecorder {
    * Record custom Insights "Jenkins master event".
    * <p>
    *    Events will be available as JenkinsMasterEvent with attributes
-   *    'agentConnectedCount' and 'quietDownMode'
+   *    'quietDownMode' and 'agentConnectedCount' as float values
+   *    due to only float and string values allowed in NewRelic
+   *    (https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/introduction-event-api#)
    * </p>
-   * @param jenkinsMasterEvent the Jenkins Master Event
+   * @param isQuietDownMode whether the Jenkins master is in quiet down mode
+   *                        (https://support.cloudbees.com/hc/en-us/articles/203737684-How-can-I-prevent-jenkins-from-starting-new-jobs-after-a-restart-)
+   * @param agentConnectedCount the number of agents currently connected to this Jenkins master.
    */
-  void recordJenkinsMasterEvent(JenkinsMasterEvent jenkinsMasterEvent);
-  
+  void recordJenkinsMasterEvent(boolean isQuietDownMode, long agentConnectedCount);
+
   /**
    * Drain all events out of this recorder.
    * <p>

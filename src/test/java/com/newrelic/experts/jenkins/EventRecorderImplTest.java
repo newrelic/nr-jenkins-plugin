@@ -6,7 +6,6 @@
 package com.newrelic.experts.jenkins;
 
 import com.newrelic.experts.client.model.Event;
-import com.newrelic.experts.client.model.JenkinsMasterEvent;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -46,10 +45,7 @@ public class EventRecorderImplTest {
 
   @Test
   public void testRecordJenkinsMasterEvent() {
-    JenkinsMasterEvent jenkinsMasterEvent = new JenkinsMasterEvent();
-    jenkinsMasterEvent.setAgentConnectedCount(10);
-    jenkinsMasterEvent.setQuietDownMode(true);
-    eventRecorder.recordJenkinsMasterEvent(jenkinsMasterEvent);
+    eventRecorder.recordJenkinsMasterEvent(true, 10);
     List<Event> results = Arrays.asList(eventRecorder.popEvents());
     assertEquals(1, results.size());
     assertEquals("", results.get(0).get(Event.PROPERTY_NAME_EVENT_TYPE));

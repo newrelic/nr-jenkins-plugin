@@ -6,7 +6,6 @@
 package com.newrelic.experts.jenkins;
 
 import com.newrelic.experts.client.model.Event;
-import com.newrelic.experts.client.model.JenkinsMasterEvent;
 import com.newrelic.experts.jenkins.extensions.EventConfigJobProperty;
 import com.newrelic.experts.jenkins.extensions.KeyValuePair;
 
@@ -25,6 +24,7 @@ import jenkins.model.Jenkins;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -33,32 +33,30 @@ import java.util.logging.Logger;
 /**
  * An implementation of the {@link EventRecorder} that utilizes a simple
  * {@link java.util.LinkedList} to store the events.
- * 
+ *
  * @author Scott DeWitt (sdewitt@newrelic.com)
  */
 public class EventRecorderImpl implements EventRecorder {
 
   private static final String CLASS_NAME = EventRecorderImpl.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
-  private final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
-  private final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
 
-  private List<Event> events;
-  
+  private final List<Event> events;
+
   public EventRecorderImpl() {
-    this.events = new LinkedList<Event>();
+    this.events = Collections.synchronizedList(new LinkedList<Event>());
   }
-  
+
   private void setLabels(Event event, String attributeName, Node node) {
     List<String> labels = new ArrayList<String>();
-    
+
     for (TagCloud<LabelAtom>.Entry atom : node.getLabelCloud()) {
       labels.add(atom.item.getDisplayName());
     }
-    
+
     event.put(attributeName, String.join("|", labels));
   }
-  
+
   private void setHostname(Event event, String attributeName, Node node) {
     Computer computer = node.toComputer();
     if (computer != null) {
@@ -72,20 +70,22 @@ public class EventRecorderImpl implements EventRecorder {
       }
     }
   }
-  
+
   private void internalRecordBuildEvent(
       BuildEventType eventType,
       Run<? extends Job<?, ?>, ? extends Run<?, ?>> build,
       TaskListener listener
   ) {
     final String methodName = "internalRecordBuildEvent";
+    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
 
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName, new Object[] { eventType });
     }
-    
+
     Job<?, ?> job = build.getParent();
-    
+
     Event event = new Event("AppBuildEvent");
     event.put("jobUrl", job.getUrl());
     event.put("jobName", job.getDisplayName());
@@ -181,7 +181,9 @@ public class EventRecorderImpl implements EventRecorder {
       String user
   ) {
     final String methodName = "recordBuildEvent";
-    
+    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
+
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName, new Object[] {
           appId
@@ -201,32 +203,37 @@ public class EventRecorderImpl implements EventRecorder {
     if (user != null) {
       event.put("user", user);
     }
-    
+
     this.events.add(event);
-  
+
     if (isLoggingDebug) {
       LOGGER.finest(String.format(
           "Added application deployment event for appId %s",
           appId
       ));
     }
-    
+
     if (isLoggingTrace) {
       LOGGER.exiting(CLASS_NAME, methodName);
     }
   }
-  
+
   @Override
   public Event[] popEvents() {
-    Event[] eventAry = new Event[this.events.size()];
-    eventAry = this.events.toArray(eventAry);
-    this.events.clear();
-    return eventAry;
+    // Despite the `events` object being a synchronized list, we are required to
+    // run this iteration in a synchronized block. See
+    // https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#synchronizedList-java.util.List-
+    synchronized (this.events) {
+      Event[] eventAry = new Event[this.events.size()];
+      eventAry = this.events.toArray(eventAry);
+      this.events.clear();
+      return eventAry;
+    }
   }
-  
+
   /**
    * Build the string used as the "buildMessage" attribute.
-   *  
+   *
    * @param eventType the build event type.
    * @param job the Jenkins job.
    * @param build the Jenkins run instance for an active run of the job.
@@ -293,20 +300,27 @@ public class EventRecorderImpl implements EventRecorder {
   }
 
   @Override
-  public void recordJenkinsMasterEvent(JenkinsMasterEvent jenkinsMasterEvent) {
+  public void recordJenkinsMasterEvent(boolean isQuietDownMode, long agentConnectedCount) {
     final String methodName = "recordJenkinsMasterEvent";
+    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
 
     if (isLoggingTrace) {
       LOGGER.entering(CLASS_NAME, methodName);
     }
 
-    Jenkins jenkins = Jenkins.getInstance();
     VersionNumber ver = Jenkins.getVersion();
-    jenkinsMasterEvent.put("providerVersion", (ver != null ? ver.toString() : "unknown"));
-    setLabels(jenkinsMasterEvent, "jenkinsMasterLabels", jenkins);
-    setHostname(jenkinsMasterEvent, "jenkinsMasterHost", jenkins);
+    Event event = new Event("JenkinsMasterEvent");
+    event.put("providerVersion", (ver != null ? ver.toString() : "unknown"));
+    // only float and string are allowed, so send as float
+    // https://docs.newrelic.com/docs/insights/insights-data-sources/custom-data/introduction-event-api#
+    event.put("quietDownMode", isQuietDownMode ? 1.0f : 0.0f );
+    event.put("agentConnectedCount", (float)agentConnectedCount );
+    Jenkins jenkins = Jenkins.getInstance();
+    setLabels(event, "jenkinsMasterLabels", jenkins);
+    setHostname(event, "jenkinsMasterHost", jenkins);
 
-    this.events.add(jenkinsMasterEvent);
+    this.events.add(event);
 
     if (isLoggingDebug) {
       LOGGER.finest(String.format(

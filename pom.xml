@@ -15,8 +15,9 @@
 	</parent>
 	<groupId>com.newrelic.jenkins</groupId>
 	<artifactId>new-relic</artifactId>
-	<version>1.0.2-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<properties>
+		<findbugs.skip>true</findbugs.skip>
 		<java.level>8</java.level>
 		<jenkins.version>2.89</jenkins.version>
 	</properties>
@@ -90,30 +91,6 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>findbugs-maven-plugin</artifactId>
-        <version>3.0.5</version>
-        <executions>
-          <execution>
-            <id>findbugs</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <xmlOutput>true</xmlOutput>
-              <findbugsXmlOutput>false</findbugsXmlOutput>
-              <effort>default</effort>
-              <threshold>Medium</threshold>
-              <failOnError>false</failOnError>
-            </configuration>
-          </execution>
-        </executions>
-        <configuration>
-          <failOnError>false</failOnError>
-        </configuration>
       </plugin>
     </plugins>
 	</build>
