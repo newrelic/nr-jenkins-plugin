@@ -18,7 +18,7 @@ The following integrations are supported.
 To install the New Relic Jenkins plugin, perform the following steps.
 
 1. [Build](#build) the New Relic Jenkins Plugin `.hpi` file or [download the
-   latest plugin release](/releases)
+   latest plugin release](https://github.com/newrelic/nr-jenkins-plugin/releases)
 1. Login to your Jenkins server as an adminstrator
 1. Navigate to `/jenkins/pluginManager/advanced`
 1. Locate the section labeled "Upload Plugin"
