@@ -15,7 +15,7 @@
 	</parent>
 	<groupId>com.newrelic.jenkins</groupId>
 	<artifactId>new-relic</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<properties>
 		<java.level>8</java.level>
 		<jenkins.version>2.249.1</jenkins.version>

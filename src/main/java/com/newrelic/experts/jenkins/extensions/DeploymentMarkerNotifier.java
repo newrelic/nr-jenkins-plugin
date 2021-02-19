@@ -19,9 +19,9 @@ import com.newrelic.experts.client.model.Application;
 import com.newrelic.experts.client.model.ApplicationList;
 import com.newrelic.experts.client.model.Deployment;
 import com.newrelic.experts.client.model.DeploymentMarker;
-import com.newrelic.experts.jenkins.EventRecorder;
 import com.newrelic.experts.jenkins.JenkinsUtils;
 import com.newrelic.experts.jenkins.Messages;
+import com.newrelic.experts.jenkins.events.AppDeploymentEventProducer;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -184,7 +184,7 @@ public class DeploymentMarkerNotifier extends Notifier implements SimpleBuildSte
         )
     );
     
-    EventRecorder recorder = JenkinsUtils.getService(EventRecorder.class);
+    AppDeploymentEventProducer producer = JenkinsUtils.getService(AppDeploymentEventProducer.class);
     String revision = JenkinsUtils.expandTokens(run, listener, this.revision);
     String changeLog = JenkinsUtils.expandTokens(run, listener, this.changeLog);
     String description = JenkinsUtils.expandTokens(run, listener, this.description);
@@ -210,7 +210,7 @@ public class DeploymentMarkerNotifier extends Notifier implements SimpleBuildSte
     
     // Record an "Insights deployment marker"
     if (this.createInsightsMarker) {
-      recorder.recordAppDeploymentEvent(
+      producer.recordEvent(
           this.appId,
           revision,
           changeLog,

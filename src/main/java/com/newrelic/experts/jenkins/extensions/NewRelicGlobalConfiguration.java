@@ -35,7 +35,9 @@ import java.util.List;
 @Extension
 public class NewRelicGlobalConfiguration extends GlobalConfiguration {
 
-  private String insightsInsertCredentialsId;
+  private String insightsInsertCredentialsId = null;
+  private int eventHarvestInterval = 60;
+  private int systemSampleInterval = 15;
 
   public NewRelicGlobalConfiguration() {
     super();
@@ -70,6 +72,22 @@ public class NewRelicGlobalConfiguration extends GlobalConfiguration {
       String insightsInsertCredentialsId
   ) {
     this.insightsInsertCredentialsId = insightsInsertCredentialsId;
+  }
+  
+  public int getEventHarvestInterval() {
+    return eventHarvestInterval;
+  }
+
+  public void setEventHarvestInterval(int eventHarvestInterval) {
+    this.eventHarvestInterval = eventHarvestInterval;
+  }
+
+  public int getSystemSampleInterval() {
+    return systemSampleInterval;
+  }
+
+  public void setSystemSampleInterval(int systemSampleInterval) {
+    this.systemSampleInterval = systemSampleInterval;
   }
 
   /**

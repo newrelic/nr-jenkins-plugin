@@ -72,7 +72,7 @@ public class EventCollectorWork extends PeriodicWork {
   
   @Override
   public long getRecurrencePeriod() {
-    return 60000;
+    return this.nrjConfig.getEventHarvestInterval() * 1000;
   } 
   
   @Override
