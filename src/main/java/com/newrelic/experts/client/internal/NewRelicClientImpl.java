@@ -9,6 +9,7 @@ import com.newrelic.experts.client.api.ClientConnectionConfiguration;
 import com.newrelic.experts.client.api.NewRelicClient;
 import com.newrelic.experts.client.api.NewRelicClientException;
 import com.newrelic.experts.client.api.ProxyConfiguration;
+import com.newrelic.experts.client.model.Application;
 import com.newrelic.experts.client.model.ApplicationList;
 import com.newrelic.experts.client.model.Deployment;
 import com.newrelic.experts.client.model.Event;
@@ -19,6 +20,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -230,7 +233,7 @@ public class NewRelicClientImpl implements NewRelicClient {
         LOGGER.finest("Retrieving applications...");
       }
 
-      ApplicationList result = this.apiHelper.get(
+      List<ApplicationList> results = this.apiHelper.get(
           client,
           this.apiHelper.buildUri(
               "https://api.newrelic.com/v2/applications.json",
@@ -240,22 +243,35 @@ public class NewRelicClientImpl implements NewRelicClient {
       );
       
       
-      if (result == null) {
+      if (results.size() == 0) {
         if (isLoggingDebug) {
           LOGGER.finest("Result was null, returning empty application list.");
         }
         return new ApplicationList();
       }
       
+      List<Application> applications = new ArrayList<Application>();
+      
+      for (ApplicationList list : results) {
+        for (Application application : list.getApplications()) {
+          applications.add(application);
+        }
+      }
+      
+      ApplicationList mergedAppList = new ApplicationList();
+      Application[] applicationsAry = new Application[applications.size()];
+      
+      mergedAppList.setApplications(applications.toArray(applicationsAry));
+      
       if (isLoggingDebug) {
         LOGGER.finest(String.format(
             "Retrieved %d applications.",
-            result.count()
+            applications.size()
             )
         );
       }
       
-      return result;
+      return mergedAppList;
     } catch (URISyntaxException exc) {
       LOGGER.log(
           Level.SEVERE,

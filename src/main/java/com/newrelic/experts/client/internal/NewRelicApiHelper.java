@@ -12,8 +12,10 @@ import com.newrelic.experts.client.api.ProxyConfiguration;
 import com.newrelic.experts.jenkins.Messages;
 
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -41,6 +43,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
+
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -493,26 +496,11 @@ public class NewRelicApiHelper {
     }
   }
   
-  /**
-   * GET the {@code uri} as a value of type {@code valueType}.
-   * <p>
-   * The return value (if any) from the POST will be mapped to a return value
-   * of type {@code valueType} also using a Jackson {@link ObjectMapper}.
-   * </p>
-   * 
-   * @param <V> The type of the return value.
-   * @param client The HTTP client to use.
-   * @param uri The URI to GET.
-   * @param valueType The expected type of the return payload.
-   * @return The return payload of the GET converted to a {@code valueType}
-   *     instance using a Jackson {@link ObjectMapper}.
-   * @throws NewRelicClientException if any type of error occurs during the
-   *     GET.
-   */
-  public <V> V get(
+  private <V> List<V> getHelper(
       CloseableHttpClient client,
       URI uri,
-      Class<V> valueType
+      Class<V> valueType,
+      List<V> values
   ) throws NewRelicClientException {
     final String methodName = "get";
     final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
@@ -534,6 +522,7 @@ public class NewRelicApiHelper {
     HttpGet getRequest = new HttpGet(uri);
     CloseableHttpResponse response = null;
     HttpEntity entity = null;
+    URI nextUri = null;
     
     try {
       if (isLoggingDebug) {
@@ -559,11 +548,17 @@ public class NewRelicApiHelper {
         );
       }
       
-      return this.mapper.readValue(
-          new BufferedReader(new InputStreamReader(entity.getContent())),
-          valueType
+      if (response.containsHeader("Link")) {
+        nextUri = parseNextLink(response.getFirstHeader("Link"));
+      }
+      
+      values.add(
+          this.mapper.readValue(
+            new BufferedReader(new InputStreamReader(entity.getContent())),
+            valueType
+          )
       );
-    } catch (UnsupportedOperationException | IOException exc) {
+    } catch (UnsupportedOperationException | IOException | URISyntaxException exc) {
       LOGGER.log(Level.SEVERE,
           String.format("The HTTP get failed with exception: %s",
               exc.getClass().getName())
@@ -584,5 +579,123 @@ public class NewRelicApiHelper {
         LOGGER.exiting(CLASS_NAME, methodName);
       }
     }
+    
+    if (nextUri != null) {
+      return getHelper(client, nextUri, valueType, values);
+    }
+    
+    return values;
+  }
+  
+  /**
+   * GET the {@code uri} as a value of type {@code valueType}.
+   * <p>
+   * The return value (if any) from the POST will be mapped to a return value
+   * of type {@code valueType} also using a Jackson {@link ObjectMapper}.
+   * </p>
+   * 
+   * @param <V> The type of the return value.
+   * @param client The HTTP client to use.
+   * @param uri The URI to GET.
+   * @param valueType The expected type of the return payload.
+   * @return The return payload of the GET converted to a {@code valueType}
+   *     instance using a Jackson {@link ObjectMapper}.
+   * @throws NewRelicClientException if any type of error occurs during the
+   *     GET.
+   */
+  public <V> List<V> get(
+      CloseableHttpClient client,
+      URI uri,
+      Class<V> valueType
+  ) throws NewRelicClientException {
+    final String methodName = "get";
+    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+
+    if (isLoggingTrace) {
+      LOGGER.entering(CLASS_NAME, methodName, new Object [] {
+          client, uri
+      });
+    }
+    
+    List<V> values = getHelper(client, uri, valueType, new ArrayList<V>());
+    
+    if (isLoggingTrace) {
+      LOGGER.exiting(CLASS_NAME, methodName);
+    }
+    
+    return values;
+  }
+  
+  /**
+   * Parse a "Link:" header returned for pagination on a New Relic API call.
+   * <p>
+   * Return the "next" URL, if any, returned in the HTTP response headers from
+   * a New Relic API call.  If no "Link:" header exists, it is of the wrong
+   * format, or there is no "next" URL, return {@code}null{@code}.
+   * </p>
+   * 
+   * @param linkHeader the HTTP response header to examine.
+   * @return the "next" URL or {@code}null{@code}
+   * @throws URISyntaxException if a URL is found but parsing fails.
+   */
+  public URI parseNextLink(Header linkHeader) throws URISyntaxException {
+    final String methodName = "parseNextLink";
+    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
+    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
+
+    if (isLoggingTrace) {
+      LOGGER.entering(CLASS_NAME, methodName, new Object [] {
+          linkHeader
+      });
+    }
+    
+    HeaderElement[] elements = linkHeader.getElements();
+    
+    if (elements.length == 0) {
+      if (isLoggingTrace) {
+        LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
+            "RETURN EARLY No Link header elements."
+        );
+      }
+      return null;
+    }
+    
+    HeaderElement element = elements[0];
+    NameValuePair rel = element.getParameterByName("rel");
+    
+    if (rel == null) {
+      LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
+          "RETURN EARLY No rel parameter."
+      );
+      return null;
+    }
+    
+    if (!rel.getValue().equalsIgnoreCase("next")) {
+      LOGGER.logp(Level.FINE, CLASS_NAME, methodName,
+          "RETURN EARLY No next value."
+      );
+      return null;
+    }
+    
+    String name = element.getName().trim();
+    String value = element.getValue().trim();
+    
+    if (isLoggingDebug) {
+      LOGGER.finest(String.format("Link header next URL is %s=%s", name, value));
+    }
+    
+    if (name.startsWith("<")) {
+      name = name.substring(1);
+    }
+    
+    if (value.endsWith(">")) {
+      value = value.substring(0, value.length() - 1);
+    }
+    
+    if (isLoggingDebug) {
+      LOGGER.finest(String.format("Final next URL is %s=%s", name, value));
+    }
+    
+    return new URI(name + "=" + value);
   }
 }

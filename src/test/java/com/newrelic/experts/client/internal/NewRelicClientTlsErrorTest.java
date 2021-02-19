@@ -24,10 +24,10 @@ import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -35,9 +35,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.SSLContext;
 
-@Test(groups = { "int" })
 public class NewRelicClientTlsErrorTest {
 
   static class StdErrorExceptionLogger implements ExceptionLogger {
@@ -64,7 +64,7 @@ public class NewRelicClientTlsErrorTest {
     }
   }
   
-  private HttpServer server;
+  private static HttpServer server;
   
   /**
    * Setup a local HTTPs server on port 12345 with a self signed certificate.
@@ -72,8 +72,8 @@ public class NewRelicClientTlsErrorTest {
    * @throws Exception if server setup fails.
    */
   @BeforeClass
-  public void setUp() throws Exception {
-    URL keyStoreUrl = this.getClass().getResource("/self-signed.jks");
+  public static void setUp() throws Exception {
+    URL keyStoreUrl = NewRelicClientTlsErrorTest.class.getResource("/self-signed.jks");
     SSLContext sslContext = SSLContextBuilder.create()
         .loadKeyMaterial(
             keyStoreUrl,
@@ -85,19 +85,19 @@ public class NewRelicClientTlsErrorTest {
             .setSoTimeout(15000)
             .setTcpNoDelay(true)
             .build();
-    this.server = ServerBootstrap.bootstrap()
+    server = ServerBootstrap.bootstrap()
             .setListenerPort(12345)
             .setSocketConfig(socketConfig)
             .setSslContext(sslContext)
             .setExceptionLogger(new StdErrorExceptionLogger())
             .registerHandler("*", new SimpleRequestHandler())
             .create();
-    this.server.start();
+    server.start();
   }
   
   @AfterClass
-  public void teardown() {
-    this.server.shutdown(0, TimeUnit.MILLISECONDS);
+  public static void teardown() {
+    server.shutdown(0, TimeUnit.MILLISECONDS);
   }
   
   /**
