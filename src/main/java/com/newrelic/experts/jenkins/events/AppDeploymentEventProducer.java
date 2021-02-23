@@ -9,7 +9,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import com.newrelic.experts.client.model.Event;
-import com.newrelic.experts.jenkins.EventRecorder;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,20 +24,17 @@ public class AppDeploymentEventProducer {
   private static final String CLASS_NAME = AppDeploymentEventProducer.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
-  private EventRecorder recorder;
   private EventHelper eventHelper;
   
   @Inject
   public AppDeploymentEventProducer(
-      EventRecorder recorder,
       EventHelper eventHelper
   ) {
-    this.recorder = recorder;
     this.eventHelper = eventHelper;
   }
   
   /**
-   * Record a deployment event as part of a post build task.
+   * Record a {@code AppDeploymentEvent} as part of a post build task.
    * 
    * @param appId the New Relic application ID.
    * @param revision the revision value from the post build task.
@@ -77,8 +73,7 @@ public class AppDeploymentEventProducer {
       event.put("user", user);
     }
     
-    this.eventHelper.setCommonAttributes(event);
-    this.recorder.recordEvent(event);
+    this.eventHelper.recordEvent(event);
   
     if (isLoggingDebug) {
       LOGGER.finest(String.format(

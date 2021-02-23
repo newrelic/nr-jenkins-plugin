@@ -9,7 +9,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import com.newrelic.experts.client.model.Event;
-import com.newrelic.experts.jenkins.EventRecorder;
 
 import hudson.model.Computer;
 import hudson.model.Executor;
@@ -38,20 +37,17 @@ public class JenkinsSystemEventProducer {
   private static final String CLASS_NAME = JenkinsSystemEventProducer.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
-  private EventRecorder recorder;
   private EventHelper eventHelper;
   
   @Inject
   public JenkinsSystemEventProducer(
-      EventRecorder recorder,
       EventHelper eventHelper
   ) {
-    this.recorder = recorder;
     this.eventHelper = eventHelper;
   }
   
   /**
-   * Record a system event.
+   * Record a {@code JenkinsSystemEvent}.
    */
   public void recordEvent() {
     final String methodName = "recordEvent";
@@ -106,8 +102,7 @@ public class JenkinsSystemEventProducer {
     event.put("queueItemsBlocked", queueStats.blocked);
     event.put("queueItemsStuck", queueStats.stuck);
     
-    this.eventHelper.setCommonAttributes(event);
-    this.recorder.recordEvent(event);
+    this.eventHelper.recordEvent(event);
     
     if (isLoggingDebug) {
       LOGGER.finest(String.format("Added Jenkins system event"));

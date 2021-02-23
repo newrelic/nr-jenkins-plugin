@@ -5,12 +5,15 @@
 
 package com.newrelic.experts.jenkins.extensions;
 
+import com.google.inject.Inject;
+
+import com.newrelic.experts.jenkins.events.EventHelper;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 
-import jenkins.model.Jenkins;
 import jenkins.model.OptionalJobProperty;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -52,8 +55,15 @@ public class EventConfigJobProperty extends OptionalJobProperty<Job<?,?>> {
   @Extension(ordinal = -1000)
   public static final class DescriptorImpl extends OptionalJobPropertyDescriptor {
     
+    private EventHelper eventHelper;
+
+    @Inject
+    public void setEventHelper(EventHelper eventHelper) {
+      this.eventHelper = eventHelper;
+    }
+    
     @Override
-    public boolean isApplicable(Class<? extends Job> jobType) {
+    public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends Job> jobType) {
       return true;
     }
 
@@ -62,8 +72,8 @@ public class EventConfigJobProperty extends OptionalJobProperty<Job<?,?>> {
       return "Customize New Relic build event settings";
     }
     
-    public List<? extends Descriptor> getCustomAttributesDescriptors() {
-      return Jenkins.getInstance().getDescriptorList(KeyValuePair.class);
+    public List<? extends Descriptor<KeyValuePair>> getCustomAttributesDescriptors() {
+      return this.eventHelper.getJenkins().getDescriptorList(KeyValuePair.class);
     }
   }
 }

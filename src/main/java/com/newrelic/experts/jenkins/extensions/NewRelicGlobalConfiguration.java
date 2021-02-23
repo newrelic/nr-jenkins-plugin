@@ -5,6 +5,8 @@
 
 package com.newrelic.experts.jenkins.extensions;
 
+import com.google.inject.Inject;
+
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
@@ -13,6 +15,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.newrelic.experts.jenkins.JenkinsUtils;
 import com.newrelic.experts.jenkins.Messages;
+import com.newrelic.experts.jenkins.events.EventHelper;
 
 import hudson.Extension;
 import hudson.security.ACL;
@@ -38,9 +41,35 @@ public class NewRelicGlobalConfiguration extends GlobalConfiguration {
   private String insightsInsertCredentialsId = null;
   private int eventHarvestInterval = 60;
   private int systemSampleInterval = 15;
+  private EventHelper eventHelper;
 
+  /**
+   * Create a new {@link NewRelicGlobalConfiguration}.
+   * <p>
+   * This public no-argument constructors is required in order for SezPoz
+   * to work properly.  If you call it directly it will thrown an
+   * {@link UnsupportedOperationException}.
+   * </p>
+   */
   public NewRelicGlobalConfiguration() {
+    throw new UnsupportedOperationException(
+      "Public no-argument constructor is required but not supported."
+    );
+  } 
+  
+  /**
+   * Create a new {@link NewRelicGlobalConfiguration}.
+   * 
+   * @param eventHelper the {@link EventHelper} singleton.
+   */
+  @Inject
+  public NewRelicGlobalConfiguration(
+      EventHelper eventHelper
+  ) {
     super();
+    
+    this.eventHelper = eventHelper;
+    
     load();
   }
   
@@ -101,7 +130,7 @@ public class NewRelicGlobalConfiguration extends GlobalConfiguration {
       @QueryParameter String insightsInsertCredentialsId
   ) {
     StandardUsernameListBoxModel result = new StandardUsernameListBoxModel();
-    if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+    if (!this.eventHelper.getJenkins().hasPermission(Jenkins.ADMINISTER)) {
       return new StandardUsernameListBoxModel()
           .includeCurrentValue(insightsInsertCredentialsId);
     }
@@ -127,7 +156,9 @@ public class NewRelicGlobalConfiguration extends GlobalConfiguration {
   public FormValidation doCheckInsightsInsertCredentialsId(
       @QueryParameter String value
   ) {
-    if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+    Jenkins jenkins = this.eventHelper.getJenkins();
+    
+    if (!jenkins.hasPermission(Jenkins.ADMINISTER)) {
       return FormValidation.ok();
     }
     if (StringUtils.isBlank(value)) {
@@ -140,7 +171,7 @@ public class NewRelicGlobalConfiguration extends GlobalConfiguration {
     }
     if (CredentialsProvider.listCredentials(
         StandardUsernameCredentials.class,
-        Jenkins.getInstance(),
+        jenkins,
         ACL.SYSTEM,
         Collections.<DomainRequirement>emptyList(),
         CredentialsMatchers.withId(value)

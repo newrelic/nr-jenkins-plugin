@@ -33,6 +33,9 @@ import java.util.regex.Pattern;
 
 /**
  * Utility class which provides static Jenkins convenience methods.
+ * <p>
+ * TODO: Convert this class to a helper singleton that can be injected.
+ * </p>
  * 
  * @author Scott DeWitt (sdewitt@newrelic.com)
  */

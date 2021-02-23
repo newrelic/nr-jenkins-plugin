@@ -28,7 +28,12 @@ public class EventHelper {
   
   private static final String CLASS_NAME = EventHelper.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
-  
+
+  /**
+   * In-memory list for buffering events during the harvest cycle.
+   */
+  private List<Event> events = new ArrayList<Event>();
+
   /**
    * Assign any node labels to {@code attributeName} in {@code event}.
    * 
@@ -90,5 +95,33 @@ public class EventHelper {
   @SuppressWarnings("deprecation")
   public Jenkins getJenkins() {
     return Jenkins.getInstance();
+  }
+  
+  /**
+   * Record a custom Insights event.
+   * 
+   * @param event the event.
+   */
+  public synchronized void recordEvent(Event event) {
+    setCommonAttributes(event);
+    this.events.add(event);
+  }
+  
+  /**
+   * Drain all events out of this recorder.
+   * <p>
+   * "Pop" is really not the right verb here since it's not a stack.  But this
+   * operation is non-idempotent.  It will actually remove all the items in
+   * the internal object storage.
+   * </p>
+   * 
+   * @return all events which have been recorded since the last call to this
+   *        method.
+   */
+  public synchronized Event[] popEvents() {
+    Event[] eventAry = new Event[this.events.size()];
+    eventAry = this.events.toArray(eventAry);
+    this.events.clear();
+    return eventAry;
   }
 }

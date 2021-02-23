@@ -9,7 +9,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import com.newrelic.experts.client.model.Event;
-import com.newrelic.experts.jenkins.EventRecorder;
 import com.newrelic.experts.jenkins.JenkinsUtils;
 import com.newrelic.experts.jenkins.Messages;
 import com.newrelic.experts.jenkins.extensions.EventConfigJobProperty;
@@ -52,22 +51,19 @@ public class AppBuildEventProducer {
   private static final String CLASS_NAME = AppBuildEventProducer.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
-  private EventRecorder recorder;
   private EventHelper eventHelper;
   
   @Inject
   public AppBuildEventProducer(
-      EventRecorder recorder,
       EventHelper eventHelper
   ) {
-    this.recorder = recorder;
     this.eventHelper = eventHelper;
   }
   
   /**
-   * Record a build event for the given {@code eventType}.
+   * Record a {@code AppBuildEvent} for the given build {@code eventType}.
    * 
-   * @param eventType the event type.
+   * @param eventType the build event type.
    * @param build the build currently running.
    * @param listener the task listener or {@code null}.
    */
@@ -133,8 +129,7 @@ public class AppBuildEventProducer {
     this.eventHelper.setLabels(event, "buildAgentLabels", buildAgent);
     this.eventHelper.setHostname(event, "buildAgentHost", buildAgent);
     
-    this.eventHelper.setCommonAttributes(event);
-    this.recorder.recordEvent(event);
+    this.eventHelper.recordEvent(event);
 
     if (isLoggingDebug) {
       LOGGER.finest(String.format(

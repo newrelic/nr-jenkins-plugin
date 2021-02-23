@@ -7,8 +7,6 @@ package com.newrelic.experts.jenkins.extensions;
 
 import com.google.inject.Inject;
 
-import com.newrelic.experts.client.api.NewRelicClient;
-import com.newrelic.experts.jenkins.EventRecorder;
 import com.newrelic.experts.jenkins.events.JenkinsSystemEventProducer;
 
 import hudson.Extension;
