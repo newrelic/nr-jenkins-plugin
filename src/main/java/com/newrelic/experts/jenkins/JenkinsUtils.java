@@ -29,6 +29,8 @@ import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -40,6 +42,9 @@ import java.util.regex.Pattern;
  * @author Scott DeWitt (sdewitt@newrelic.com)
  */
 public class JenkinsUtils {
+  
+  private static final String CLASS_NAME = JenkinsUtils.class.getName();
+  private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
   
   // Copied from hudson.Util
   public static final Pattern VARIABLE =
@@ -157,12 +162,21 @@ public class JenkinsUtils {
       
         // Expand Macros
         if (workspace != null) {
-          result = TokenMacro.expand(run, workspace, listener, result);
+          // Disable the use of the JSON macro temporarily for security reasons.
+          // https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-27568
+          // https://regex101.com/r/3MvoyI/1
+          result = result.replaceAll("(?i)[$]([{]?)([#]?)JSON", "\\$$1$2JSON_DISABLED");
+          return TokenMacro.expand(run, workspace, listener, result, false, null);
         }
       }
-      return TokenMacro.expandAll((Build<?, ?>)run, listener, template);
+      return TokenMacro.expandAll((Build<?, ?>)run, listener, template, false, null);
     } catch (MacroEvaluationException mee) {
       // TODO: log
+      LOGGER.log(
+          Level.SEVERE,
+          String.format("Error expanding macro: %s", mee.getMessage())
+      );
+
       return template;
     }
   }
