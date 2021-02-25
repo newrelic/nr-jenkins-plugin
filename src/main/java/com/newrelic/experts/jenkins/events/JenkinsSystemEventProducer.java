@@ -14,6 +14,9 @@ import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Node;
 import hudson.model.Queue;
+import hudson.model.Queue.BuildableItem;
+import hudson.model.Queue.LeftItem;
+import hudson.model.Queue.WaitingItem;
 
 import jenkins.model.Jenkins;
 
@@ -94,13 +97,16 @@ public class JenkinsSystemEventProducer {
     
     QueueStats queueStats = getQueueStats(jenkins);
     
-    event.put("queueSize", queueStats.pending);
-    event.put("queueItemCount", queueStats.pending);
-    event.put("queueItemsPending", queueStats.pending);
-    event.put("queueItemsWaiting", queueStats.buildable);
-    event.put("queueItemsBuildable", queueStats.buildable);
+    event.put("queueSize", queueStats.length);
+    event.put("queueItemCount", queueStats.length);
+    event.put("queueItemsWaiting", queueStats.waiting);
     event.put("queueItemsBlocked", queueStats.blocked);
+    event.put("queueItemsBuildable", queueStats.buildable);
+    event.put("queueItemsPending", queueStats.pending);
     event.put("queueItemsStuck", queueStats.stuck);
+    event.put("queueItemsLeft", queueStats.left);
+    event.put("queueItemsCompleted", queueStats.left - queueStats.cancelled);
+    event.put("queueItemsCancelled", queueStats.cancelled);
     
     this.eventHelper.recordEvent(event);
     
@@ -120,22 +126,27 @@ public class JenkinsSystemEventProducer {
     if (queue == null) {
       return queueStats;
     }
-    
-    queueStats.pending = queue == null ? 0 : queue.getPendingItems().size();
-    
+        
     for (Queue.Item i : queue.getItems()) {
-      if (i == null) {
-        continue;
-      }
-      
       queueStats.length += 1;
+      if (i instanceof WaitingItem) {
+        queueStats.waiting += 1;
+      } else if (i instanceof LeftItem) {
+        LeftItem left = (LeftItem)i;
+        queueStats.left += 1;
+        if (left.isCancelled()) {
+          queueStats.cancelled += 1;
+        }
+      }
       if (i.isBlocked()) {
         queueStats.blocked += 1;
-      }
-      if (i.isBuildable()) {
+      } else if (i.isBuildable()) {
+        BuildableItem buildable = (BuildableItem)i;
         queueStats.buildable += 1;
-      }
-      if (i.isStuck()) {
+        if (buildable.isPending()) {
+          queueStats.pending += 1;
+        }
+      } else if (i.isStuck()) {
         queueStats.stuck += 1;
       }
     }
@@ -145,10 +156,13 @@ public class JenkinsSystemEventProducer {
   
   class QueueStats {
     int length = 0;
+    int waiting = 0;
     int blocked = 0;
     int buildable = 0;
-    int stuck = 0;
     int pending = 0;
+    int stuck = 0;
+    int left = 0;
+    int cancelled = 0;
   }
   
   private void updateNodeStats(Node node, NodeStats stats) {
