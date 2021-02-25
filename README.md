@@ -32,6 +32,7 @@ To install the New Relic Jenkins plugin, perform the following steps.
 1. [Install the plugin](#installation) <sup>Jenkins</sup>
 1. [Setup the required credentials](#setup-credentials) <sup>Jenkins</sup>
 1. [Setup the proxy configuration (optional)](#setup-proxy) <sup>Jenkins</sup>
+1. [Customize collection intervals (optional)](#setup-collection-intervals) <sup>Jenkins</sup>
 1. [Create custom dashboards!](#dashboards) <sup>New Relic</sup>
 
 ### Setup credentials
@@ -75,10 +76,26 @@ setup the proxy configuration, perform the following steps.
    through the proxy in the field labeled "No Proxy Host", one per line.
 1. Click on the button labeled "Submit"
 
+### Setup collection intervals
+The New Relic Jenkins Plugin has two customizable collection intervals.
+The event harvest interval controls the frequency at which events are harvested
+from the event collector and sent to New Relic.  The default is 60 seconds.
+The system metric sample interval controls the frequency at which samples are taken
+of the Jenkins environment.  The default is 15 seconds.
+
+To customize the collection intervals, perform the following steps.
+
+1. Login to your Jenkins server as an adminstrator
+1. Navigate to `/jenkins/configure`
+1. Scroll down to the section labeled "New Relic"
+1. Optionally enter a new value for the event harvest interval in the field labeled "Event Harvest Interval"
+1. Optionally enter a new value for the system metric sample interval in the field labeled "System Metric Sample Interval"  
+1. Click on the button labeled "Save"
+
 ### Dashboards
 Once installed and configured, the New Relic Jenkins Plugin will immediately
 start sending build events for all builds in Jenkins to Insights.  Build events
-are collected and reported to Insights in 1 minute harvest cycles.  Insights
+are collected and reported to Insights in 1 minute harvest cycles by default.  Insights
 dashboards can use the custom event type `AppBuildEvent` in NRQL queries to
 display Jenkins build data.
 
@@ -125,11 +142,50 @@ by selecting the "Create Insights Deployment Event" check box on the
 
 | Attribute name | Attribute description | Example value(s) |
 | --- | --- | --- |
+| provider | Name of the CI/CD provider | Jenkins |
+| providerVersion | Version of the CI/CD provider | 2.140 |
 | appId | The APM application ID | 2536781 |
 | revision | The revision string for the deployment marker | prod-master-13.3 |
 | changelog | The change log string for the deployment marker | Added bug fix for #14 |
 | description | The description string for the deployment marker | The build for prod-master-13.3 |
 | user | The user string for the deployment marker | beeker@muppetmaster.com |
+| jenkinsMasterLabels | The node labels of the Jenkins master node, separated by "\|" | master\|docker\|macos |
+| jenkinsMasterHost | The host name or IP of the Jenkins master node | master-jenkins.myco.com |
+
+#### JenkinsSystemEvent
+Various attributes about the Jenkins environment are reported as a custom
+Insights event of type `JenkinsSystemEvent`.  `JenkinsSystemEvent`s are collected and
+reported to Insights in 15 second harvest cycles by default.  `JenkinsSystemEvent`s have
+the following attributes.
+
+| Attribute name | Attribute description | Example value(s) |
+| --- | --- | --- |
+| provider | Name of the CI/CD provider | Jenkins |
+| providerVersion | Version of the CI/CD provider | 2.140 |
+| jenkinsMasterLabels | The node labels of the Jenkins master node, separated by "\|" | master\|docker\|macos |
+| jenkinsMasterHost | The host name or IP of the Jenkins master node | master-jenkins.myco.com |
+| executorCount | The total number of executors on all nodes | 10 |
+| executorsInUse | The total number of executors in use across all nodes | 5 |
+| executorsFree | The total number of executors free across all nodes | 5 |
+| nodeCount | The total number of nodes in the Jenkins environment (controller + agents) | 2 |
+| nodesOnline | The total number of nodes online in the Jenkins environment | 2 |
+| nodesOffline | The total number of nodes offline in the Jenkins environment | 0 |
+| queueSize | The total number of items in the queue in any stage | 5 |
+| queueItemCount | An alias for `queueSize` | 5 |
+| queueItemsWaiting | The number of items that have entered the queue but are in their [quiet period](https://www.jenkins.io/blog/2010/08/11/quiet-period-feature/) | 2 |
+| queueItemsBlocked | The number of blocked items in the queue | 3 |
+| queueItemsBuildable | The total number of buildable items in the queue including those that are pending | 5 |
+| queueItemsPending | The number of buildable items in the queue that have been assigned to an executor | 4 |
+| queueItemsStuck | The number of items that have been [in the queue too long](https://www.jenkins.io/doc/book/using/executor-starvation/) | 0 |
+| queueItemsLeft | The total number of items that have left the queue including those that were cancelled | 3 |
+| queueItemsCompleted | The number of items that left the queue because they were completed | 2 |
+| queueItemsCancelled | The number of items that left the queue because they were cancelled | 1 |
+| inQuietDownMode | Whether or not Jenkins is quieting down | false |
+| agentConnectedCount | The total number of Jenkins [Computers](https://javadoc.jenkins-ci.org/hudson/model/Computer.html) that are online and accepting tasks | 2 |
+
+Note that the the number of items that have left the queue (either via normal termination or being cancelled) is
+not a strictly cumulative number.  The number of left items is cleared periodically because not
+_all_ items can be kept indefinitely.
 
 #### Example NRQL queries
 Below are some sample NRQL queries that can be used to visualize build event

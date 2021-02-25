@@ -6,7 +6,6 @@
 package com.newrelic.experts.jenkins;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,9 +62,6 @@ public class NewRelicJenkinsModule extends AbstractModule {
   
   @Override
   public void configure() {
-    bind(EventRecorder.class)
-      .to(EventRecorderImpl.class)
-      .in(Singleton.class);
     bind(NewRelicClient.class)
       .toInstance(newRelicClientImpl());
   }

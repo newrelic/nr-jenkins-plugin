@@ -3,79 +3,76 @@
  * SPDX-License-Identifier: Apache-2.0 
  */
 
-package com.newrelic.experts.jenkins;
+package com.newrelic.experts.jenkins.events;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import com.newrelic.experts.client.model.Event;
+import com.newrelic.experts.jenkins.JenkinsUtils;
+import com.newrelic.experts.jenkins.Messages;
 import com.newrelic.experts.jenkins.extensions.EventConfigJobProperty;
 import com.newrelic.experts.jenkins.extensions.KeyValuePair;
 
 import hudson.model.AbstractBuild;
-import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.labels.LabelAtom;
-import hudson.util.TagCloud;
-import hudson.util.VersionNumber;
 
 import jenkins.model.Jenkins;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * An implementation of the {@link EventRecorder} that utilizes a simple
- * {@link java.util.LinkedList} to store the events.
+ * An event producer for {@code AppBuildEvent}s.
  * 
- * @author Scott DeWitt (sdewitt@newrelic.com)
+ * @author sdewitt@newrelic.com
  */
-public class EventRecorderImpl implements EventRecorder {
+@Singleton
+public class AppBuildEventProducer {
+  /**
+   * An enumeration of Jenkins build phases.
+   * 
+   * @author Scott DeWitt (sdewitt@newrelic.com)
+   */
+  public enum BuildEventType {
+    INITIALIZED,
+    STARTED,
+    COMPLETED,
+    FINALIZED,
+    DELETED
+  }
 
-  private static final String CLASS_NAME = EventRecorderImpl.class.getName();
+  private static final String CLASS_NAME = AppBuildEventProducer.class.getName();
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
-  private List<Event> events;
+  private EventHelper eventHelper;
   
-  public EventRecorderImpl() {
-    this.events = new LinkedList<Event>();
+  @Inject
+  public AppBuildEventProducer(
+      EventHelper eventHelper
+  ) {
+    this.eventHelper = eventHelper;
   }
   
-  private void setLabels(Event event, String attributeName, Node node) {
-    List<String> labels = new ArrayList<String>();
-    
-    for (TagCloud<LabelAtom>.Entry atom : node.getLabelCloud()) {
-      labels.add(atom.item.getDisplayName());
-    }
-    
-    event.put(attributeName, String.join("|", labels));
-  }
-  
-  private void setHostname(Event event, String attributeName, Node node) {
-    Computer computer = node.toComputer();
-    if (computer != null) {
-      try {
-        event.put(attributeName, computer.getHostName());
-      } catch (IOException | InterruptedException exc) {
-        LOGGER.log(Level.WARNING, String.format(
-            "Could not get node hostname: %s",
-            exc.getMessage()
-        ), exc);
-      }
-    }
-  }
-  
-  private void internalRecordBuildEvent(
+  /**
+   * Record a {@code AppBuildEvent} for the given build {@code eventType}.
+   * 
+   * @param eventType the build event type.
+   * @param build the build currently running.
+   * @param listener the task listener or {@code null}.
+   */
+  public void recordEvent(
       BuildEventType eventType,
       Run<? extends Job<?, ?>, ? extends Run<?, ?>> build,
       TaskListener listener
   ) {
-    final String methodName = "internalRecordBuildEvent";
+    final String methodName = "recordEvent";
     final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
     final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
     
@@ -86,6 +83,7 @@ public class EventRecorderImpl implements EventRecorder {
     Job<?, ?> job = build.getParent();
     
     Event event = new Event("AppBuildEvent");
+    
     event.put("jobUrl", job.getUrl());
     event.put("jobName", job.getDisplayName());
     event.put("jobFullName", job.getFullDisplayName());
@@ -116,6 +114,7 @@ public class EventRecorderImpl implements EventRecorder {
       event.put("buildStatusSummary", build.getBuildStatusSummary().message);
     }
     
+    @SuppressWarnings("deprecation")
     Node buildAgent = Jenkins.getInstance();
     if (build instanceof AbstractBuild) {
       Node agent = (
@@ -127,102 +126,23 @@ public class EventRecorderImpl implements EventRecorder {
     }
     event.put("buildAgentName", buildAgent.getDisplayName());
     event.put("buildAgentDesc", buildAgent.getNodeDescription());
-    setLabels(event, "buildAgentLabels", buildAgent);
-    setHostname(event, "buildAgentHost", buildAgent);
+    this.eventHelper.setLabels(event, "buildAgentLabels", buildAgent);
+    this.eventHelper.setHostname(event, "buildAgentHost", buildAgent);
     
-    Jenkins jenkins = Jenkins.getInstance();
-    VersionNumber ver = Jenkins.getVersion();
-    event.put("provider", "Jenkins");
-    event.put("providerVersion", (ver != null ? ver.toString() : "unknown"));
-    setLabels(event, "jenkinsMasterLabels", jenkins);
-    setHostname(event, "jenkinsMasterHost", jenkins);
-    setCustomAttributes(event, job, build, listener);
-    
-    this.events.add(event);
-  
+    this.eventHelper.recordEvent(event);
+
     if (isLoggingDebug) {
       LOGGER.finest(String.format(
-          "Added event with type %s for job %s and build %s",
+          "Added application build event with type %s for job %s and build %s",
           eventType,
           job.getDisplayName(),
           build.getDisplayName()
       ));
     }
-    
+        
     if (isLoggingTrace) {
       LOGGER.exiting(CLASS_NAME, methodName);
     }
-  }
-  
-  @Override
-  public void recordBuildEvent(
-      BuildEventType eventType,
-      Run<? extends Job<?, ?>, ? extends Run<?, ?>> build,
-      TaskListener listener
-  ) {
-    this.internalRecordBuildEvent(eventType, build, listener);
-  }
-  
-  @Override
-  public void recordBuildEvent(
-      BuildEventType eventType,
-      Run<? extends Job<?, ?>, ? extends Run<?, ?>> build
-  ) {
-    this.internalRecordBuildEvent(eventType, build, null);
-  }
-
-  @Override
-  public void recordAppDeploymentEvent(
-      String appId,
-      String revision,
-      String changeLog,
-      String description,
-      String user
-  ) {
-    final String methodName = "recordBuildEvent";
-    final boolean isLoggingTrace = LOGGER.isLoggable(Level.FINE);
-    final boolean isLoggingDebug = LOGGER.isLoggable(Level.FINEST);
-    
-    if (isLoggingTrace) {
-      LOGGER.entering(CLASS_NAME, methodName, new Object[] {
-          appId
-      });
-    }
-
-    Event event = new Event("AppDeploymentEvent");
-    event.put("appId", appId);
-    event.put("revision", revision);
-    
-    if (changeLog != null) {
-      event.put("changelog", changeLog);
-    }
-    if (description != null) {
-      event.put("description", description);
-    }
-    if (user != null) {
-      event.put("user", user);
-    }
-    
-    this.events.add(event);
-  
-    if (isLoggingDebug) {
-      LOGGER.finest(String.format(
-          "Added application deployment event for appId %s",
-          appId
-      ));
-    }
-    
-    if (isLoggingTrace) {
-      LOGGER.exiting(CLASS_NAME, methodName);
-    }
-  }
-  
-  @Override
-  public Event[] popEvents() {
-    Event[] eventAry = new Event[this.events.size()];
-    eventAry = this.events.toArray(eventAry);
-    this.events.clear();
-    return eventAry;
   }
   
   /**
@@ -241,7 +161,7 @@ public class EventRecorderImpl implements EventRecorder {
     // xyz build full display name for job full display name
     String status = eventType.name().toLowerCase();
     status = status.substring(0, 1).toUpperCase() + status.substring(1);
-    return Messages.EventRecorderImpl_BuildMessage(
+    return Messages.AppBuildEventProducer_BuildMessage(
         status,
         build.getFullDisplayName(),
         job.getFullDisplayName()

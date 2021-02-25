@@ -7,8 +7,8 @@ package com.newrelic.experts.jenkins.extensions;
 
 import com.google.inject.Inject;
 
-import com.newrelic.experts.jenkins.EventRecorder;
-import com.newrelic.experts.jenkins.EventRecorder.BuildEventType;
+import com.newrelic.experts.jenkins.events.AppBuildEventProducer;
+import com.newrelic.experts.jenkins.events.AppBuildEventProducer.BuildEventType;
 
 import hudson.Extension;
 import hudson.model.Job;
@@ -25,7 +25,7 @@ import hudson.model.listeners.RunListener;
 @Extension
 public class EventRunListener extends RunListener<Run<?, ?>> {
 
-  private EventRecorder recorder;
+  private AppBuildEventProducer producer;
 
   /**
    * Create a new {@link EventRunListener}.
@@ -42,8 +42,10 @@ public class EventRunListener extends RunListener<Run<?, ?>> {
   }
 
   @Inject
-  public EventRunListener(EventRecorder test) {
-    this.recorder = test;
+  public EventRunListener(
+      AppBuildEventProducer producer
+  ) {
+    this.producer = producer;
   }
   
   /**
@@ -74,7 +76,7 @@ public class EventRunListener extends RunListener<Run<?, ?>> {
     if (!isReporting(build)) {
       return;
     }
-    this.recorder.recordBuildEvent(BuildEventType.STARTED, build, listener);
+    this.producer.recordEvent(BuildEventType.STARTED, build, listener);
   }
 
   @Override
@@ -85,7 +87,7 @@ public class EventRunListener extends RunListener<Run<?, ?>> {
     if (!isReporting(build)) {
       return;
     }    
-    this.recorder.recordBuildEvent(BuildEventType.COMPLETED, build, listener);
+    this.producer.recordEvent(BuildEventType.COMPLETED, build, listener);
   }
 
   @Override
@@ -95,7 +97,7 @@ public class EventRunListener extends RunListener<Run<?, ?>> {
     if (!isReporting(build)) {
       return;
     } 
-    this.recorder.recordBuildEvent(BuildEventType.FINALIZED, build);
+    this.producer.recordEvent(BuildEventType.FINALIZED, build, null);
   }
 
   @Override
@@ -105,7 +107,7 @@ public class EventRunListener extends RunListener<Run<?, ?>> {
     if (!isReporting(build)) {
       return;
     } 
-    this.recorder.recordBuildEvent(BuildEventType.INITIALIZED, build);
+    this.producer.recordEvent(BuildEventType.INITIALIZED, build, null);
   }
 
   @Override
@@ -115,7 +117,7 @@ public class EventRunListener extends RunListener<Run<?, ?>> {
     if (!isReporting(build)) {
       return;
     } 
-    this.recorder.recordBuildEvent(BuildEventType.DELETED, build);
+    this.producer.recordEvent(BuildEventType.DELETED, build, null);
   }
   
   

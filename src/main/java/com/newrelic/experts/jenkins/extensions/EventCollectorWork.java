@@ -11,8 +11,8 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.newrelic.experts.client.api.NewRelicClient;
 import com.newrelic.experts.client.api.NewRelicClientException;
 import com.newrelic.experts.client.model.Event;
-import com.newrelic.experts.jenkins.EventRecorder;
 import com.newrelic.experts.jenkins.JenkinsUtils;
+import com.newrelic.experts.jenkins.events.EventHelper;
 
 import hudson.Extension;
 import hudson.model.PeriodicWork;
@@ -34,7 +34,7 @@ public class EventCollectorWork extends PeriodicWork {
   private static final Logger LOGGER = Logger.getLogger(CLASS_NAME);
 
   private NewRelicGlobalConfiguration nrjConfig;
-  private EventRecorder recorder;
+  private EventHelper eventHelper;
   private NewRelicClient client;
   
   /**
@@ -56,23 +56,22 @@ public class EventCollectorWork extends PeriodicWork {
    * to pass in dependencies.
    * 
    * @param nrjConfig the {@link NewRelicGlobalConfiguration} to use.
-   * @param recorder the {@link EventRecorder} to send events too.
    * @param client the {@link NewRelicClient} to use.
    */
   @Inject
   public EventCollectorWork(
       NewRelicGlobalConfiguration nrjConfig,
-      EventRecorder recorder,
+      EventHelper eventHelper,
       NewRelicClient client
   ) {
     this.nrjConfig = nrjConfig;
-    this.recorder = recorder;
+    this.eventHelper = eventHelper;
     this.client = client;
   }
   
   @Override
   public long getRecurrencePeriod() {
-    return 60000;
+    return this.nrjConfig.getEventHarvestInterval() * 1000;
   } 
   
   @Override
@@ -85,7 +84,7 @@ public class EventCollectorWork extends PeriodicWork {
       LOGGER.entering(CLASS_NAME, methodName);
     }
 
-    Event[] events = this.recorder.popEvents();
+    Event[] events = this.eventHelper.popEvents();
 
     if (events.length == 0) {
       if (isLoggingDebug) {

@@ -15,8 +15,10 @@
 	</parent>
 	<groupId>com.newrelic.jenkins</groupId>
 	<artifactId>new-relic</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<properties>
+    <findbugs.skip>true</findbugs.skip>
+    <spotbugs.skip>true</spotbugs.skip>
 		<java.level>8</java.level>
 		<jenkins.version>2.249.1</jenkins.version>
 	</properties>
@@ -152,6 +154,16 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito2</artifactId>
+      <scope>test</scope>
+   </dependency>
 	</dependencies>
 	<organization>
 	  <name>New Relic, Inc.</name>
