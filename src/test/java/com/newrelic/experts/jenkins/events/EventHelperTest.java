@@ -3,9 +3,9 @@ package com.newrelic.experts.jenkins.events;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
-
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import com.newrelic.experts.client.model.Event;
 
@@ -18,10 +18,9 @@ import hudson.util.VersionNumber;
 import jenkins.model.Jenkins;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -29,10 +28,9 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Jenkins.class)
+@ExtendWith(MockitoExtension.class)
 public class EventHelperTest {
-
+  
   private void configureSetLabelsMocks(
       Node mockNode,
       String[] labels
@@ -64,14 +62,16 @@ public class EventHelperTest {
   
   @SuppressWarnings("deprecation")
   private void configureSetCommonAttributesMocks(
+      MockedStatic<Jenkins> mockedJenkins,
       String version,
       String[] labels,
       String hostname
   ) throws IOException, InterruptedException {
-    PowerMockito.mockStatic(Jenkins.class);
+    //mockStatic(Jenkins.class);
+    
     Jenkins jenkins = mock(Jenkins.class);
-    when(Jenkins.getInstance()).thenReturn(jenkins);
-    when(Jenkins.getVersion()).thenReturn(new VersionNumber(version));
+    mockedJenkins.when(Jenkins::getInstance).thenReturn(jenkins);
+    mockedJenkins.when(Jenkins::getVersion).thenReturn(new VersionNumber(version));
     configureSetLabelsMocks(jenkins, labels);
     configureSetHostnameMocks(jenkins, hostname);
   }
@@ -159,8 +159,8 @@ public class EventHelperTest {
     String hostname = "www.newrelic.com";
     String version = "1.289";
 
-    try {
-      configureSetCommonAttributesMocks(version, labels, hostname);
+    try (MockedStatic<Jenkins> mockedJenkins = mockStatic(Jenkins.class)) {
+      configureSetCommonAttributesMocks(mockedJenkins, version, labels, hostname);
       
       // Execute the test
       EventHelper eventHelper = new EventHelper();
@@ -185,8 +185,8 @@ public class EventHelperTest {
     String hostname = "www.newrelic.com";
     String version = "1.289";
 
-    try {
-      configureSetCommonAttributesMocks(version, labels, hostname);
+    try (MockedStatic<Jenkins> mockedJenkins = mockStatic(Jenkins.class)) {
+      configureSetCommonAttributesMocks(mockedJenkins, version, labels, hostname);
       
       // Execute the test
       EventHelper eventHelper = new EventHelper();
@@ -214,7 +214,7 @@ public class EventHelperTest {
     String hostname = "www.newrelic.com";
     String version = "1.289";
   
-    try {
+    try (MockedStatic<Jenkins> mockedJenkins = mockStatic(Jenkins.class)) {
       // Execute the test
       EventHelper eventHelper = new EventHelper();
 
@@ -227,6 +227,7 @@ public class EventHelperTest {
         }
         
         configureSetCommonAttributesMocks(
+            mockedJenkins,
             version + index,
             newLabels,
             hostname + index

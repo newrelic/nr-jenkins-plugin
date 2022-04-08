@@ -43,7 +43,7 @@ public class EventHelper {
    */
   public void setLabels(Event event, String attributeName, Node node) {
     List<String> labels = new ArrayList<String>();
-    
+        
     for (TagCloud<LabelAtom>.Entry atom : node.getLabelCloud()) {
       labels.add(atom.item.getDisplayName());
     }

@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+  The New Relic Jenkins Plugin is a Jenkins plugin that provides various mechanisms for reporting information from your Jenkins server to New Relic.
+</div>
