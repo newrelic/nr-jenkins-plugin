@@ -1,1 +1,267 @@
-{"title":"Build Activity","icon":"bar-chart","grid_column_count":3,"filter":{"key_names":["jobName","buildResult","jenkinsMasterHost","revision"],"event_types":["JenkinsBuildEvent","AppBuildEvent","AppDeploymentEvent"],"filter_first":false},"owner":{"email":"sdewitt@newrelic.com"},"widgets":[{"title":"Total Builds","nrql":"SELECT uniqueCount(buildId) as Builds, filter(uniqueCount(buildId), WHERE buildEventType='finalized' and buildResult ='SUCCESS') as 'Passed', filter(uniqueCount(buildId), WHERE buildEventType='finalized' and buildResult != 'SUCCESS')  as 'Failed'  from AppBuildEvent since today","process_as":"attribute_sheet","width":1,"height":1,"row":1,"column":1,"event_types":["AppBuildEvent"],"facet":null,"customizations":null,"notes":null},{"title":"Overall Build Results","nrql":"SELECT filter(uniqueCount(buildId), WHERE buildEventType='finalized' and buildResult ='SUCCESS') as 'Passed', filter(uniqueCount(buildId), WHERE buildEventType='finalized' and buildResult != 'SUCCESS')  as 'Failed' FROM AppBuildEvent TIMESERIES","process_as":"line_chart","width":1,"height":1,"row":1,"column":2,"event_types":["AppBuildEvent"],"facet":null,"customizations":null,"notes":null},{"title":"Build Events","nrql":"SELECT buildMessage FROM AppBuildEvent LIMIT 500","process_as":"event_table","width":1,"height":3,"row":1,"column":3,"event_types":["AppBuildEvent"],"facet":null,"customizations":null,"notes":null},{"title":"Builds By Host","nrql":"SELECT uniqueCount(buildId) as Builds from AppBuildEvent facet jenkinsMasterHost","process_as":"facet_pie_chart","width":1,"height":1,"row":2,"column":1,"event_types":["AppBuildEvent"],"facet":"jenkinsMasterHost","customizations":{"drilldown":{"dashboard_id":864106}},"notes":null},{"title":"Builds By Job","nrql":"SELECT uniqueCount(buildId) as Builds from AppBuildEvent facet jobName","process_as":"facet_bar_chart","width":1,"height":1,"row":2,"column":2,"event_types":["AppBuildEvent"],"facet":"jobName","customizations":{"drilldown":{"dashboard_id":864106}},"notes":null},{"title":"Average Build Duration","nrql":"SELECT average(buildDuration), max(buildDuration), min(buildDuration) from AppBuildEvent  TIMESERIES","process_as":"line_chart","width":1,"height":1,"row":3,"column":1,"event_types":["AppBuildEvent"],"facet":null,"customizations":null,"notes":null},{"title":"Average Build Duration By Job","nrql":"SELECT average(buildDuration) from AppBuildEvent facet jobName TIMESERIES","process_as":"faceted_line_chart","width":1,"height":1,"row":3,"column":2,"event_types":["AppBuildEvent"],"facet":"jobName","customizations":null,"notes":null},{"title":"Build Activity Compared to Yesterday","nrql":"SELECT uniqueCount(buildId) as Builds from AppBuildEvent since today timeseries compare with 1 day ago","process_as":"comparison_line_chart","width":1,"height":1,"row":4,"column":1,"event_types":["AppBuildEvent"],"facet":null,"customizations":null,"notes":null},{"title":"Average Build Delay","nrql":"SELECT average(buildDelay) from AppBuildEvent","process_as":"billboard","width":1,"height":1,"row":4,"column":2,"event_types":["AppBuildEvent"],"facet":null,"customizations":{},"notes":null},{"title":"Deployments","nrql":"SELECT count(*) FROM AppDeploymentEvent TIMESERIES","process_as":"line_chart","width":1,"height":1,"row":4,"column":3,"event_types":["AppDeploymentEvent"],"facet":null,"customizations":null,"notes":null},{"title":"All Build Data","nrql":"SELECT * FROM AppBuildEvent LIMIT 500","process_as":"event_table","width":2,"height":1,"row":5,"column":1,"event_types":["AppBuildEvent"],"facet":null,"customizations":null,"notes":null},{"title":"Application Deployments By Revision","nrql":"SELECT count(*) FROM AppDeploymentEvent FACET revision","process_as":"facet_bar_chart","width":1,"height":1,"row":5,"column":3,"event_types":["AppDeploymentEvent"],"facet":"revision","customizations":{"drilldown":{"dashboard_id":864106}},"notes":null}],"dashboard_account_id":2267580}
+{
+  "name": "Jenkins Build Activity",
+  "description": "",
+  "permissions": "PUBLIC_READ_ONLY",
+  "pages": [
+    {
+      "name": "Jenkins Build Activity",
+      "description": "",
+      "widgets": [
+        {
+          "title": "How many builds have we run today vs yesterday?",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 2,
+            "height": 2
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT uniqueCount(buildId) as 'Builds' FROM AppBuildEvent SINCE today COMPARE WITH 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "How many builds are we running per application?",
+          "layout": {
+            "column": 3,
+            "row": 1,
+            "width": 5,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT uniqueCount(buildId) as Builds from AppBuildEvent facet jobFullName since today timeseries "
+              }
+            ]
+          }
+        },
+        {
+          "title": "How many minutes are our builds taking on average per application?",
+          "layout": {
+            "column": 8,
+            "row": 1,
+            "width": 5,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT average(buildDuration) / 1000 / 60 as 'Minutes' from AppBuildEvent facet jobName TIMESERIES since today"
+              }
+            ]
+          }
+        },
+        {
+          "title": "What percentage of our builds are failing?",
+          "layout": {
+            "column": 1,
+            "row": 3,
+            "width": 2,
+            "height": 2
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT percentage(count(*), WHERE buildResult='FAILURE') as 'Failed' FROM AppBuildEvent COMPARE WITH 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Which application builds are failing?",
+          "layout": {
+            "column": 1,
+            "row": 5,
+            "width": 5,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT filter(uniqueCount(buildId), WHERE buildEventType='finalized' and buildResult != 'SUCCESS')  as 'Failed' FROM AppBuildEvent FACET jobFullName TIMESERIES since today"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Where are our builds running?",
+          "layout": {
+            "column": 6,
+            "row": 5,
+            "width": 4,
+            "height": 4
+          },
+          "linkedEntityGuids": [
+            "MjI2NzU4MHxWSVp8REFTSEJPQVJEfDg2NDEwNg"
+          ],
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT uniqueCount(buildId) as Builds from AppBuildEvent facet buildAgentHost since today"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Where are our builds failing?",
+          "layout": {
+            "column": 10,
+            "row": 5,
+            "width": 3,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT count(*) as 'Builds' FROM AppBuildEvent WHERE buildResult = 'FAILURE' FACET buildAgentHost SINCE today"
+              }
+            ]
+          }
+        },
+        {
+          "title": "How long are builds waiting to execute on average?",
+          "layout": {
+            "column": 1,
+            "row": 9,
+            "width": 2,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT average(buildDelay) from AppBuildEvent since today"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Build History",
+          "layout": {
+            "column": 3,
+            "row": 9,
+            "width": 10,
+            "height": 4
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT * FROM AppBuildEvent LIMIT 500"
+              }
+            ]
+          }
+        },
+        {
+          "title": "How many deployments have we done today?",
+          "layout": {
+            "column": 1,
+            "row": 13,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT count(*) as 'Deployments' FROM AppDeploymentEvent FACET revision since today compare with 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "How many deployments have done today vs yesterday?",
+          "layout": {
+            "column": 3,
+            "row": 13,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT count(*) FROM AppDeploymentEvent TIMESERIES"
+              }
+            ]
+          }
+        },
+        {
+          "title": "What versions did we deploy today?",
+          "layout": {
+            "column": 9,
+            "row": 13,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountId": account#,
+                "query": "SELECT uniques(revision) FROM AppDeployEvent since today"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
