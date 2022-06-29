@@ -1,0 +1,20 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - run: mvn package
+      - run: mkdir staging && cp target/*.hpi staging
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: staging

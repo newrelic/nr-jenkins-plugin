@@ -47,3 +47,6 @@ buildNumber.properties
 
 # Other
 .README.md*
+
+# Intellij
+.idea
