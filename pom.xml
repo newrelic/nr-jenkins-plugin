@@ -1,52 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
+<!--
  * Copyright 2019 New Relic Corporation. All rights reserved.
- * SPDX-License-Identifier: Apache-2.0 
+ * SPDX-License-Identifier: Apache-2.0
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.jenkins-ci.plugins</groupId>
-		<artifactId>plugin</artifactId>
-		<version>4.40</version>
-		<relativePath />
-	</parent>
-	<groupId>com.newrelic.jenkins</groupId>
-	<artifactId>new-relic</artifactId>
-	<version>1.0.5</version>
-	<properties>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>4.72</version>
+    <relativePath />
+  </parent>
+  <groupId>com.newrelic.jenkins</groupId>
+  <artifactId>new-relic</artifactId>
+  <version>1.0.6</version>
+  <properties>
     <findbugs.skip>true</findbugs.skip>
     <spotbugs.skip>true</spotbugs.skip>
-		<java.level>8</java.level>
-		<jenkins.version>2.342</jenkins.version>
-	</properties>
-	<name>New Relic Jenkins Plugin</name>
-	<!-- Assuming you want to host on @jenkinsci: <url>https://wiki.jenkins.io/display/JENKINS/TODO+Plugin</url> 
-		<scm> <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection> 
-		<developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection> 
-		<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url> </scm> -->
-	<repositories>
-		<repository>
-			<id>repo.jenkins-ci.org</id>
-			<url>https://repo.jenkins-ci.org/public/</url>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>repo.jenkins-ci.org</id>
-			<url>https://repo.jenkins-ci.org/public/</url>
-		</pluginRepository>
-	</pluginRepositories>
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-checkstyle-plugin</artifactId>
-					<version>3.1.0</version>
-					<configuration>
+    <jenkins.version>2.361.4</jenkins.version>
+  </properties>
+  <name>New Relic Jenkins Plugin</name>
+  <!-- Assuming you want to host on @jenkinsci: <url>https://wiki.jenkins.io/display/JENKINS/TODO+Plugin</url>
+    <scm> <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url> </scm> -->
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.1.0</version>
+          <configuration>
             <configLocation>./config/google_checks.xml</configLocation>
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
@@ -54,8 +52,8 @@
             <violationSeverity>warning</violationSeverity>
             <failsOnError>true</failsOnError>
             <linkXRef>false</linkXRef>
-					</configuration>
-				</plugin>
+          </configuration>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -63,8 +61,8 @@
           <configuration>
           </configuration>
         </plugin>
-			</plugins>
-		</pluginManagement>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -90,18 +88,19 @@
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.6.0</version>
         <configuration>
           <finalName>nr-jenkins-${project.version}</finalName>
           <appendAssemblyId>false</appendAssemblyId>
           <descriptors>
             <descriptor>src/assembly/src.xml</descriptor>
           </descriptors>
+          <tarLongFileMode>posix</tarLongFileMode>
         </configuration>
         <executions>
           <execution>
-            <id>make-assembly</id> <!-- this is used for inheritance merges -->
-            <phase>package</phase> <!-- bind to the packaging phase -->
+            <id>make-assembly</id>            <!-- this is used for inheritance merges -->
+            <phase>package</phase>            <!-- bind to the packaging phase -->
             <goals>
               <goal>single</goal>
             </goals>
@@ -111,7 +110,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0</version>
+        <version>3.0.0</version>
         <dependencies>
           <dependency>
             <groupId>org.codehaus.mojo</groupId>
@@ -121,22 +120,33 @@
         </dependencies>
       </plugin>
     </plugins>
-	</build>
-	<packaging>hpi</packaging>
-	<dependencies>
-		<dependency>
-			<groupId>org.jenkins-ci.plugins</groupId>
-			<artifactId>credentials</artifactId>
-		</dependency>
+  </build>
+  <packaging>hpi</packaging>
+  <dependencies>
     <dependency>
-			<groupId>org.jenkins-ci.plugins</groupId>
-			<artifactId>token-macro</artifactId>
-			<version>2.15</version>
-		</dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>credentials</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>token-macro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-step-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>structs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>jaxb</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.2.2</version>
+      <version>2.15.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
@@ -155,16 +165,16 @@
       <version>3.4.0</version>
       <scope>test</scope>
     </dependency>
-	</dependencies>
-	<organization>
-	  <name>New Relic, Inc.</name>
-	  <url>https://www.newrelic.com</url>
-	</organization>
-	<url>https://github.com/newrelic/new-relic-jenkins</url>
-	<scm>
-	  <url>git@github.com:newrelic/new-relic-jenkins.git</url>
-	  <connection>scm:git:git@github.com:newrelic/new-relic-jenkins.git</connection>
-	</scm>
+  </dependencies>
+  <organization>
+    <name>New Relic, Inc.</name>
+    <url>https://www.newrelic.com</url>
+  </organization>
+  <url>https://github.com/newrelic/new-relic-jenkins</url>
+  <scm>
+    <url>git@github.com:newrelic/new-relic-jenkins.git</url>
+    <connection>scm:git:git@github.com:newrelic/new-relic-jenkins.git</connection>
+  </scm>
   <licenses>
     <license>
       <name>Apache 2.0</name>
@@ -175,8 +185,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.332.x</artifactId>
-        <version>1246.va_b_50630c1d19</version>
+        <artifactId>bom-2.361.x</artifactId>
+        <version>2102.v854b_fec19c92</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
