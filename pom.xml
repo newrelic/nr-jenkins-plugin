@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.72</version>
+    <version>4.52</version>
     <relativePath />
   </parent>
   <groupId>com.newrelic.jenkins</groupId>
@@ -117,6 +117,19 @@
             <version>1.5.1</version>
           </dependency>
         </dependencies>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <rules>
+                <dependencyConvergence/>
+              </rules>
+            </configuration>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -149,8 +162,26 @@
       <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>apache-httpcomponents-client-4-api</artifactId>
+
+      <exclusions>
+        <!-- fixes for dependency convergence error -->
+        <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-cache</artifactId>
+        </exclusion>
+        <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore-nio</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpasyncclient</artifactId>
+        </exclusion>
+
+    </exclusions>
+
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-inline</artifactId>
       <version>3.4.0</version>
