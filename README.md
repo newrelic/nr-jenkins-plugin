@@ -1,4 +1,22 @@
+<a href="https://opensource.newrelic.com/oss-category/#archived"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/dark/Archived.png"><source media="(prefers-color-scheme: light)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Archived.png"><img alt="New Relic Open Source archived project banner." src="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Archived.png"></picture></a>
+
+# Archival Notice
+
+❗Notice: This project has been archived _as is_ and is no longer actively maintained.
+
+The current recommendation is to utilize the [OpenTelemetry Plugin for Jenkins](https://plugins.jenkins.io/opentelemetry) and [New Relic Deployment Notifier Plugin](https://github.com/jenkinsci/newrelic-deployment-notifier-plugin) instead.
+
+For more details please see:
+
+- [https://docs.newrelic.com/docs/more-integrations/open-source-telemetry-integrations/jenkins/monitoring-jenkins-ot/](https://docs.newrelic.com/docs/more-integrations/open-source-telemetry-integrations/jenkins/monitoring-jenkins-ot/)
+- [https://docs.newrelic.com/docs/change-tracking/ci-cd/change-tracking-jenkins/>](https://docs.newrelic.com/docs/change-tracking/ci-cd/change-tracking-jenkins/)
+- [OpenTelemetry Plugin for Jenkins](https://plugins.jenkins.io/opentelemetry)
+- [New Relic Deployment Notifier Plugin](https://github.com/jenkinsci/newrelic-deployment-notifier-plugin)
+
+---
+
 # New Relic Jenkins Plugin
+
 The New Relic Jenkins Plugin is a Jenkins plugin that provides various
 mechanisms for reporting information from your Jenkins server to New Relic.
 
@@ -8,12 +26,12 @@ The following integrations are supported.
    build metrics reported as custom attributes are automatically pushed into
    Insights using the Insights Insert API.
 1. APM deployment markers can be pushed to New Relic using the
-   "Record New Relic Deployment Marker" notifier by adding a post-build step. 
+   "Record New Relic Deployment Marker" notifier by adding a post-build step.
 1. Application deployment events that mirror the APM deployment markers can
    be pushed into Insights whenever a deployment marker is sent using the
    "Create Insights Deployment Event" check box on the
    "Record New Relic Deployment Marker" notifier.
-  
+
 ## Installation
 To install the New Relic Jenkins plugin, perform the following steps.
 
@@ -89,7 +107,7 @@ To customize the collection intervals, perform the following steps.
 1. Navigate to `/jenkins/configure`
 1. Scroll down to the section labeled "New Relic"
 1. Optionally enter a new value for the event harvest interval in the field labeled "Event Harvest Interval"
-1. Optionally enter a new value for the system metric sample interval in the field labeled "System Metric Sample Interval"  
+1. Optionally enter a new value for the system metric sample interval in the field labeled "System Metric Sample Interval"
 1. Click on the button labeled "Save"
 
 ### Dashboards
@@ -290,7 +308,7 @@ per project.
 To execute our corporate CLA, which is required if your contribution is on
 behalf of a company, or if you have any questions, please drop us an email at
 open-source@newrelic.com.
- 
+
 ## Licensing
 The New Relic Jenkins Plugin is [licensed under the Apache 2.0 License](LICENSE).
 
